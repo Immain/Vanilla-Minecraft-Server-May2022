@@ -9,7 +9,7 @@
   vars:
     users:
     - username: mcserver
-      password: $6$2FLPs3AHYiVwZCZa$XRkZW3P5TkO65f4JMtB89z4qkDCb0RLXUBqVYbGGxQjRSrXq8b9c/W2UKUXkS5dUjRdrbrNuW9pBlmPcgVcFo.
+      password: 
   vars_prompt:
     - name: ansible_password
       prompt: Enter password
