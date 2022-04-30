@@ -6,6 +6,10 @@
   hosts: localhost
   become: true
   gather_facts: yes
+  vars:
+    users:
+    - username: mcserver
+      password: $6$2FLPs3AHYiVwZCZa$XRkZW3P5TkO65f4JMtB89z4qkDCb0RLXUBqVYbGGxQjRSrXq8b9c/W2UKUXkS5dUjRdrbrNuW9pBlmPcgVcFo.
   vars_prompt:
     - name: ansible_password
       prompt: Enter password
@@ -43,3 +47,60 @@
       - java-1.8.0-openjdk
       - elasticsearch
     become: true
+
+  - name: Create User mcserver with Home Directory
+    user: 
+      name: "{{ item.username }}"
+      shell: /bin/bash
+      createhome: yes
+      group: wheel
+      generate_ssh_key: yes
+      ssh_key_bits: 2048
+      password: "{{ item.password }}"
+      update_password: always
+    with_items: "{{ users }}"
+
+  - name: Installing Screen
+    yum:
+      name: screen
+      state: present
+
+  - name: Create Minecraft Directory
+    file:
+      path: /home/mcserver/Desktop/minecraft
+      state: directory
+      mode: '0777'
+
+  - name: Download Latest Minecraft Server Jar
+    get_url:
+      url: "https://launcher.mojang.com/v1/objects/f1a0073671057f01aa843443fef34330281333ce/server.jar"
+      dest: /home/mcserver/Desktop/minecraft
+      mode: '0440'
+
+  - name: Changing perm of jar file, adding "+x"
+    file: dest=/home/mcserver/Desktop/minecraft/server.jar mode=+x
+
+  - name: Creating Proxy Manager Compose Stack
+    copy:
+      dest: "/home/mcserver/Desktop/minecraft/launch.sh"
+      content: |
+        #!/bin/bash
+        java -Xmx1024M -Xms1024M -jar server.jar nogui 
+
+  - name: Change perms for folder
+    become: yes
+    command: chmod 777 -R /home/mcserver/Desktop/minecraft
+
+  - name: Change perms for shell script
+    become: yes
+    command: chmod +x /home/mcserver/Desktop/minecraft/launch.sh
+
+  - name: Change perms for jar file
+    become: yes
+    command: chmod +x /home/mcserver/Desktop/minecraft/server.jar
+
+  - name: Trigger EULA
+    script:
+      cmd:  /home/mcserver/Desktop/minecraft/launch.sh
+    become: yes
+    become_user: sudo
