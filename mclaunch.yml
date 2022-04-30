@@ -10,7 +10,7 @@
   vars:
     users:
     - username: mcserver
-      password: 
+      password: $6$vawUpW5CgP4nWtYk$zF9D8lSmOxa/2UEOFgR.K7j27UzqfB7fc1AteAoqYx2GU.2oFeUM4zS06L4oCQc9ZNT9pjdTBw3KfleCFK/6D. 
   vars_prompt:
     - name: ansible_password
       prompt: Enter password
@@ -51,6 +51,8 @@
       - elasticsearch
 
   - name: Create User mcserver with Home Directory
+    become: yes
+    become_user: root
     user: 
       name: "{{ item.username }}"
       shell: /bin/bash
@@ -94,8 +96,8 @@
     copy:
       dest: /home/mcserver/Desktop/minecraft/launch.sh
       content: |
-        #!/bin/bash
-        java -Xmx1024M -Xms1024M -jar server.jar nogui
+        #!/bin/sh
+        screen -dms minecraft java -Xmx1024M -Xms1024M -jar server.jar nogui
 
   - name: Change perms for folder
     become: yes
