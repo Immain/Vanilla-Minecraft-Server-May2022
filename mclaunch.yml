@@ -1,0 +1,45 @@
+###############################
+# PDS-LLC Minecraft Installer #
+###############################
+---
+- name: Minecraft Server Installer Script
+  hosts: localhost
+  become: true
+  gather_facts: yes
+  vars_prompt:
+    - name: ansible_password
+      prompt: Enter password
+      unsafe: yes
+      private: yes
+  tasks:
+  - name: Check OS Release is AlmaLinux
+    assert:
+      that:
+      - ansible_facts['os_family'] == "RedHat"
+      - ansible_facts['distribution'] == "AlmaLinux"
+      fail_msg: Host {{ ansible_hostname }} does not meet minimal reps
+
+  - name: install elasticsearch rpm key
+    rpm_key:
+      key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+      state: present
+    become: true
+
+  - name: install elasticsearch 8.x rpm repository
+    yum_repository:
+      name: elasticsearch-8.x
+      description: Elasticsearch repository for 8.x packages
+      baseurl: https://artifacts.elastic.co/packages/8.x/yum
+      gpgcheck: true
+      gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    become: true
+
+  - name: install java & elasticsearch 8.x
+    yum:
+      name: "{{ item }}"
+      state: present
+      update_cache: true
+    loop:
+      - java-1.8.0-openjdk
+      - elasticsearch
+    become: true
