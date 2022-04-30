@@ -90,7 +90,7 @@
     become_user: root
     file: dest=/home/mcserver/Desktop/minecraft/server.jar mode=+x
 
-  - name: Creating Proxy Manager Compose Stack
+  - name: Creating MC Launcher Bash Script
     copy:
       dest: /home/mcserver/Desktop/minecraft/launch.sh
       content: |
