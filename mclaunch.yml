@@ -7,10 +7,6 @@
   become: yes
   become_user: mcserver
   gather_facts: yes
-  vars:
-    users:
-    - username: mcserver
-      password: 
   vars_prompt:
     - name: ansible_password
       prompt: Enter password
