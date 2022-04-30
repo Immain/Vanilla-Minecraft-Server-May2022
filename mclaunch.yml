@@ -119,12 +119,20 @@
     args:
       chdir: /home/mcserver/Desktop/minecraft/
 
-  - name: Accept EULA
-    become: yes
-    become_user: mcserver
-    command: echo "eula=true" > eula.txt
-    args:
-      chdir: /home/mcserver/Desktop/minecraft/
+  - name: Change EULA to True
+    copy:
+      dest: /home/mcserver/Desktop/minecraft/eula.txt
+      content: |
+        eula=true
+
+  - name: "Verify EULA is True"
+    shell: |
+      cat /home/mcserver/Desktop/minecraft/eula.txt
+    register: file_content
+
+  - name: "Print EULA to Console"
+    debug:
+      msg: "{{ file_content.stdout }}"
 
   - name: Start Minecraft
     become: yes
