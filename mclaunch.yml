@@ -4,7 +4,8 @@
 ---
 - name: Minecraft Server Installer Script
   hosts: localhost
-  become: true
+  become: yes
+  become_user: mcserver
   gather_facts: yes
   vars:
     users:
@@ -27,7 +28,6 @@
     rpm_key:
       key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
       state: present
-    become: true
 
   - name: install elasticsearch 8.x rpm repository
     yum_repository:
@@ -37,8 +37,11 @@
       gpgcheck: true
       gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
     become: true
+    become_user: root
 
   - name: install java & elasticsearch 8.x
+    become: yes
+    become_user: root
     yum:
       name: "{{ item }}"
       state: present
@@ -46,7 +49,6 @@
     loop:
       - java-1.8.0-openjdk
       - elasticsearch
-    become: true
 
   - name: Create User mcserver with Home Directory
     user: 
@@ -61,46 +63,72 @@
     with_items: "{{ users }}"
 
   - name: Installing Screen
+    become: yes
+    become_user: root
     yum:
       name: screen
       state: present
 
   - name: Create Minecraft Directory
+    become: yes
+    become_user: root
     file:
       path: /home/mcserver/Desktop/minecraft
       state: directory
       mode: '0777'
 
   - name: Download Latest Minecraft Server Jar
+    become: yes
+    become_user: root
     get_url:
       url: "https://launcher.mojang.com/v1/objects/f1a0073671057f01aa843443fef34330281333ce/server.jar"
       dest: /home/mcserver/Desktop/minecraft
       mode: '0440'
 
   - name: Changing perm of jar file, adding "+x"
+    become: yes
+    become_user: root
     file: dest=/home/mcserver/Desktop/minecraft/server.jar mode=+x
 
   - name: Creating Proxy Manager Compose Stack
     copy:
-      dest: "/home/mcserver/Desktop/minecraft/launch.sh"
+      dest: /home/mcserver/Desktop/minecraft/launch.sh
       content: |
         #!/bin/bash
-        java -Xmx1024M -Xms1024M -jar server.jar nogui 
+        java -Xmx1024M -Xms1024M -jar server.jar nogui
 
   - name: Change perms for folder
     become: yes
+    become_user: root
     command: chmod 777 -R /home/mcserver/Desktop/minecraft
 
   - name: Change perms for shell script
     become: yes
+    become_user: root
     command: chmod +x /home/mcserver/Desktop/minecraft/launch.sh
 
   - name: Change perms for jar file
     become: yes
+    become_user: root
     command: chmod +x /home/mcserver/Desktop/minecraft/server.jar
 
   - name: Trigger EULA
-    script:
-      cmd:  /home/mcserver/Desktop/minecraft/launch.sh
     become: yes
-    become_user: sudo
+    become_user: mcserver
+    shell: ./launch.sh >> log.txt
+    args:
+      chdir: /home/mcserver/Desktop/minecraft/
+
+  - name: Accept EULA
+    become: yes
+    become_user: mcserver
+    command: echo "eula=true" > eula.txt
+    args:
+      chdir: /home/mcserver/Desktop/minecraft/
+
+  - name: Start Minecraft
+    become: yes
+    become_user: mcserver
+    shell: ./launch.sh >> start.txt
+    args:
+      chdir: /home/mcserver/Desktop/minecraft/
